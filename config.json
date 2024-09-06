@@ -1,0 +1,74 @@
+{
+  "api_url": "https:/api.openai.com/v1",
+  "api_key": "sk-xxxxxxxxxxxx",
+  "model": "gpt-4o-mini",
+  "prompts": [
+    {
+      "name": "default",
+      "prompt": [
+        {
+          "role": "user",
+          "content": [
+            "Please could you write a commit message for my changes.",
+            "Only respond with the commit message. Don't give any notes.",
+            "Explain what were the changes and why the changes were done.",
+            "Focus the most important changes.",
+            "Use the present tense.",
+            "Use a semantic commit prefix.",
+            "Hard wrap lines at 72 characters.",
+            "Ensure the title is only 50 characters.",
+            "Do not start any lines with the hash symbol.",
+            "The commit message must be only one sentence and as short as possible.",
+            "Make use of GitMoji in the title prefix.",
+            "",
+            "Please provide the commit message directly, without any markdown formatting or code block symbols.",
+            "",
+            "Here is my git diff:",
+            "```",
+            "%{diff}",
+            "```"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "standardize",
+      "prompt": [
+        {
+          "role": "system",
+          "content": [
+            "You are an AI assistant, please analyze the git diff and file changes below and generate a standardized commit message."
+          ]
+        },
+        {
+          "role": "user",
+          "content": [
+            "Analyze the following git diff and generate a standardized commit message following the Conventional Commits specification.",
+            "The commit message should start with one of the following types:",
+            "- feat: A new feature",
+            "- fix: A bug fix",
+            "- docs: Documentation only changes",
+            "- style: Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)",
+            "- refactor: A code change that neither fixes a bug nor adds a feature",
+            "- perf: A code change that improves performance",
+            "- test: Adding missing tests or correcting existing tests",
+            "- chore: Changes to the build process or auxiliary tools and libraries such as documentation generation",
+            "",
+            "Example commit messages:",
+            "- feat: add new user authentication method",
+            "- fix: correct typo in README",
+            "- docs: update API documentation",
+            "",
+            "Make use of GitMoji in the title prefix.",
+            "Please provide the commit message directly, without any markdown formatting or code block symbols.",
+            "",
+            "Here is the git diff:",
+            "```",
+            "%{diff}",
+            "```"
+          ]
+        }
+      ]
+    }
+  ]
+}
