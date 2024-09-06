@@ -26,6 +26,14 @@ jobs:
             artifact_name: autocommit.exe
             asset_name: autocommit-windows-amd64.exe
             target: x86_64-pc-windows-msvc
+          - os: windows-latest
+            artifact_name: autocommit.exe
+            asset_name: autocommit-windows-x86.exe
+            target: i686-pc-windows-msvc
+          - os: windows-latest
+            artifact_name: autocommit.exe
+            asset_name: autocommit-windows-arm64.exe
+            target: aarch64-pc-windows-msvc
           - os: macos-latest
             artifact_name: autocommit
             asset_name: autocommit-macos-arm64
@@ -43,6 +51,10 @@ jobs:
 
       - name: Add Rust Target
         run: rustup target add ${{ matrix.target }}
+
+      - name: Install openssl (linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get install libssl-dev
 
       - name: Build
         run: cargo build --verbose --release --target ${{ matrix.target }}
