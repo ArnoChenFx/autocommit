@@ -1,0 +1,71 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions: write-all
+env:
+  CARGO_INCREMENTAL: 0
+  RUST_BACKTRACE: short
+
+jobs:
+  build-and-release:
+    name: Build and Release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_name: autocommit
+            asset_name: autocommit-linux-amd64
+            target: x86_64-unknown-linux-musl
+          - os: windows-latest
+            artifact_name: autocommit.exe
+            asset_name: autocommit-windows-amd64.exe
+            target: x86_64-pc-windows-msvc
+          - os: macos-latest
+            artifact_name: autocommit
+            asset_name: autocommit-macos-arm64
+            target: aarch64-apple-darwin
+          - os: macos-latest
+            artifact_name: autocommit
+            asset_name: autocommit-macos-amd64
+            target: x86_64-apple-darwin
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install Rust Stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Add Rust Target
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Build
+        run: cargo build --verbose --release --target ${{ matrix.target }}
+
+      - name: Strip binary (linux and macos)
+        if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
+        run: strip "target/${{ matrix.target }}/release/autocommit"
+
+      - name: Get the version
+        id: get_version
+        shell: bash
+        run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
+
+      - name: Rename binary
+        shell: bash
+        run: |
+          cd target/${{ matrix.target }}/release
+          mv ${{ matrix.artifact_name }} ${{ matrix.asset_name }}
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: target/${{ matrix.target }}/release/${{ matrix.asset_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
