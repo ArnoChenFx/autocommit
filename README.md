@@ -18,7 +18,7 @@ AutoCommit 支持以下命令行参数：
 Usage: autocommit [OPTIONS]
 
 Options:
-  -c, --config    配置文件路径（可选）, 缺省时会从当前目录和autodiff程序所在的目录中寻找"config.json"
+  -c, --config    配置文件路径（可选）, 缺省时会从当前目录和autocommit程序所在的目录中寻找"config.json"
   -p, --prompt    选择预设提示词（可选）, 缺省时为"default"
   -f, --file      从文件导入 diff（可选）, 缺省时使用当前目录的`git diff --cached`结果
   -h, --help      显示帮助信息

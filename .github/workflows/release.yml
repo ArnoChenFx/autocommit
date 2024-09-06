@@ -54,7 +54,7 @@ jobs:
 
       - name: Install openssl (linux)
         if: matrix.os == 'ubuntu-latest'
-        run: sudo apt-get install libssl-dev
+        run: sudo apt-get install librust-openssl-dev
 
       - name: Build
         run: cargo build --verbose --release --target ${{ matrix.target }}
