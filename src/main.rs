@@ -86,7 +86,7 @@ async fn main() -> Result<(), ()> {
     } else {
         diff = get_diff_from_context();
     }
-    println!("diff: {}", diff);
+    // println!("diff: {}", diff);
 
     // 打开配置文件
     let mut file = File::open(config_file).unwrap();
@@ -162,15 +162,13 @@ async fn generate_commit(config: &Config, request_body: &RequestBody) -> String 
     // 创建 HTTP 客户端
     let client = Client::new();
 
-    let url = format!("{}/chat/completions", config.api_url.as_str());
-
     // 创建请求正文
     let request_body = serde_json::to_string(&request_body).unwrap();
     // println!("{}", request_body.as_str());
 
     // 发起 POST 请求
     let response = client
-        .post(url.as_str())
+        .post(config.api_url.as_str())
         .header(
             "Authorization",
             format!("Bearer {}", config.api_key.as_str()),
@@ -192,30 +190,34 @@ async fn generate_commit(config: &Config, request_body: &RequestBody) -> String 
             match chunk {
                 Ok(data) => {
                     // 将收到的字节流解码为字符串
-                    let text = String::from_utf8_lossy(&data).trim().to_string();
-                    if !text.is_empty() {
-                        if text.starts_with("data:") {
+                    let response = String::from_utf8_lossy(&data).trim().to_string();
+                    if !response.is_empty() {
+                        for text in response.split('\n') {
+                            let text = text.trim();
+                            if text.is_empty() || !text.starts_with("data:") {
+                                continue;
+                            }
                             let sub = text[5..text.len()].trim();
-                            if sub != "[DONE]" {
-                                let json: serde_json::Value = serde_json::from_str(sub).unwrap();
-                                // println!("{}", sub);
-                                if let Some(choices) = json["choices"].as_array() {
-                                    for choice in choices.iter() {
-                                        if let Some(delta) = choice["delta"].as_object() {
-                                            if !delta.is_empty() {
-                                                if let Some(content) = delta["content"].as_str() {
-                                                    if !content.is_empty() {
-                                                        result.push_str(content);
-                                                        print!("{}", content);
-                                                        break;
-                                                    }
+                            if sub == "[DONE]" {
+                                println!("");
+                                continue;
+                            }
+                            let json: serde_json::Value = serde_json::from_str(sub).unwrap();
+                            // println!("{}", sub);
+                            if let Some(choices) = json["choices"].as_array() {
+                                for choice in choices.iter() {
+                                    if let Some(delta) = choice["delta"].as_object() {
+                                        if !delta.is_empty() {
+                                            if let Some(content) = delta["content"].as_str() {
+                                                if !content.is_empty() {
+                                                    result.push_str(content);
+                                                    print!("{}", content);
+                                                    break;
                                                 }
                                             }
                                         }
                                     }
                                 }
-                            } else {
-                                println!("");
                             }
                         }
                     }
