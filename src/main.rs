@@ -43,13 +43,13 @@ struct Config {
     prompts: Vec<PromptConfig>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Debug)]
 struct Message {
     role: String,
     content: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Debug)]
 struct RequestBody {
     model: String,
     messages: Vec<Message>,
@@ -143,7 +143,7 @@ fn get_diff_from_context() -> String {
         .output()
         .expect("Failed to execute git diff command");
 
-    let diff = String::from_utf8_lossy(&output.stdout).to_string();
+    let diff = String::from_utf8_lossy(&output.stdout).trim().to_string();
     if diff.is_empty() {
         panic!("no diff content");
     }
@@ -153,9 +153,15 @@ fn get_diff_from_context() -> String {
 
 fn get_diff_from_file(diff_file: &PathBuf) -> String {
     let mut file = File::open(diff_file).unwrap();
-    let mut data = String::new();
-    file.read_to_string(&mut data).unwrap();
-    data
+    let mut diff = String::new();
+    file.read_to_string(&mut diff).unwrap();
+
+    diff = diff.trim().to_string();
+    if diff.is_empty() {
+        panic!("no diff content");
+    }
+
+    diff
 }
 
 async fn generate_commit(config: &Config, request_body: &RequestBody) -> String {
