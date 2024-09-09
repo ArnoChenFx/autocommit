@@ -10,11 +10,11 @@ use std::path::PathBuf;
 #[derive(Parser, Debug, Clone)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// 配置文件
+    /// 配置文件 (Optional)
     #[arg(short, long)]
     config: Option<std::path::PathBuf>,
 
-    /// 选择预设
+    /// 选择预设 (Optional)
     #[arg(short, long)]
     prompt: Option<String>,
 
