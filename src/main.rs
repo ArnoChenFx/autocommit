@@ -189,41 +189,54 @@ async fn generate_commit(config: &Config, request_body: &RequestBody) -> String 
 
     // 检查响应状态
     if response.status().is_success() {
-        // 逐块读取响应体
         let mut stream = response.bytes_stream();
+        let mut buffer = String::new();
 
         while let Some(chunk) = stream.next().await {
             match chunk {
                 Ok(data) => {
-                    // 将收到的字节流解码为字符串
-                    let response = String::from_utf8_lossy(&data).trim().to_string();
-                    if !response.is_empty() {
-                        for text in response.split('\n') {
-                            let text = text.trim();
-                            if text.is_empty() || !text.starts_with("data:") {
-                                continue;
-                            }
-                            let sub = text[5..text.len()].trim();
-                            if sub == "[DONE]" {
-                                println!("");
-                                continue;
-                            }
-                            let json: serde_json::Value = serde_json::from_str(sub).unwrap();
-                            // println!("{}", sub);
-                            if let Some(choices) = json["choices"].as_array() {
-                                for choice in choices.iter() {
-                                    if let Some(delta) = choice["delta"].as_object() {
-                                        if !delta.is_empty() {
-                                            if let Some(content) = delta["content"].as_str() {
+                    // 将收到的字节流解码为字符串并追加到缓冲区
+                    buffer.push_str(&String::from_utf8_lossy(&data));
+
+                    // 逐行处理缓冲区中的数据
+                    while let Some(newline_pos) = buffer.find('\n') {
+                        let line = buffer.drain(..=newline_pos).collect::<String>();
+                        let text = line.trim();
+
+                        if !text.starts_with("data:") {
+                            continue;
+                        }
+
+                        let sub = text[5..].trim();
+                        if sub == "[DONE]" {
+                            println!();
+                            continue;
+                        }
+
+                        match serde_json::from_str::<serde_json::Value>(sub) {
+                            Ok(json) => {
+                                if let Some(choices) =
+                                    json.get("choices").and_then(|c| c.as_array())
+                                {
+                                    for choice in choices {
+                                        if let Some(delta) =
+                                            choice.get("delta").and_then(|d| d.as_object())
+                                        {
+                                            if let Some(content) =
+                                                delta.get("content").and_then(|c| c.as_str())
+                                            {
                                                 if !content.is_empty() {
                                                     result.push_str(content);
                                                     print!("{}", content);
-                                                    break;
                                                 }
                                             }
                                         }
                                     }
                                 }
+                            }
+                            Err(e) => {
+                                eprintln!("\nError parsing JSON line: {}", e);
+                                eprintln!("Original line: {}", sub);
                             }
                         }
                     }
